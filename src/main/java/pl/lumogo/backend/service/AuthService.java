@@ -14,6 +14,8 @@ import pl.lumogo.backend.dto.UpdateProfileRequest;
 import pl.lumogo.backend.model.AppUser;
 import pl.lumogo.backend.repository.AppUserRepository;
 
+import java.util.Locale;
+
 @Service
 public class AuthService {
 
@@ -33,14 +35,15 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         validateRegistration(request);
 
-        if (appUserRepository.existsByEmail(request.getEmail())) {
-            return new AuthResponse("error", "Konto z tym adresem e-mail już istnieje");
+        String email = normalizeEmail(request.getEmail());
+        if (appUserRepository.existsByEmail(email)) {
+            throw new EmailAlreadyUsedException();
         }
 
         AppUser appUser = new AppUser(
             request.getFirstName().trim(),
-            request.getLastName().trim(),
-            request.getEmail().trim().toLowerCase(),
+            request.getLastName() == null ? "" : request.getLastName().trim(),
+            email,
             passwordEncoder.encode(request.getPassword())
         );
 
@@ -60,7 +63,7 @@ public class AuthService {
             return new AuthResponse("error", "E-mail i hasło są wymagane");
         }
 
-        String email = request.getEmail().trim().toLowerCase();
+        String email = normalizeEmail(request.getEmail());
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             email,
             request.getPassword()
@@ -87,7 +90,7 @@ public class AuthService {
             return new AuthResponse("error", "E-mail jest wymagany");
         }
 
-        AppUser appUser = appUserRepository.findByEmail(email.trim().toLowerCase())
+        AppUser appUser = appUserRepository.findByEmail(normalizeEmail(email))
             .orElseThrow(() -> new IllegalArgumentException("Użytkownik nie znaleziony"));
 
         return new AuthResponse(
@@ -106,7 +109,7 @@ public class AuthService {
             return new AuthResponse("error", "E-mail jest wymagany");
         }
 
-        String email = request.getEmail().trim().toLowerCase();
+        String email = normalizeEmail(request.getEmail());
         AppUser appUser = appUserRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalArgumentException("Użytkownik nie znaleziony"));
 
@@ -153,15 +156,22 @@ public class AuthService {
         );
     }
 
-    private void validatePassword(String password) {
+    /**
+     * Ta sama reguła co w aplikacji mobilnej (RegistrationScreen):
+     * min. 8 znaków, co najmniej jedna wielka litera i jeden znak specjalny.
+     */
+    static void validatePassword(String password) {
         if (password == null || password.isBlank()) {
             throw new IllegalArgumentException("Hasło jest wymagane");
         }
-        if (password.length() < 5) {
-            throw new IllegalArgumentException("Hasło musi mieć co najmniej 5 znaków");
+        if (password.length() < 8) {
+            throw new IllegalArgumentException("Hasło musi mieć co najmniej 8 znaków");
         }
-        if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$")) {
-            throw new IllegalArgumentException("Hasło musi zawierać co najmniej jedną dużą literę, jedną małą literę i jedną cyfrę");
+        if (!password.codePoints().anyMatch(Character::isUpperCase)) {
+            throw new IllegalArgumentException("Hasło musi zawierać co najmniej jedną wielką literę");
+        }
+        if (!password.matches("(?s).*[^\\p{L}\\p{N}\\s].*")) {
+            throw new IllegalArgumentException("Hasło musi zawierać co najmniej jeden znak specjalny");
         }
     }
 
@@ -169,27 +179,19 @@ public class AuthService {
         if (request.getFirstName() == null || request.getFirstName().isBlank()) {
             throw new IllegalArgumentException("Imię jest wymagane");
         }
-        if (request.getLastName() == null || request.getLastName().isBlank()) {
-            throw new IllegalArgumentException("Nazwisko jest wymagane");
-        }
         if (request.getEmail() == null || request.getEmail().isBlank()) {
             throw new IllegalArgumentException("E-mail jest wymagany");
-        }
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new IllegalArgumentException("Hasło jest wymagane");
         }
         if (request.getPasswordConfirm() == null || request.getPasswordConfirm().isBlank()) {
             throw new IllegalArgumentException("Potwierdzenie hasła jest wymagane");
         }
-        if (!request.getPassword().equals(request.getPasswordConfirm())) {
+        if (request.getPassword() != null && !request.getPassword().equals(request.getPasswordConfirm())) {
             throw new IllegalArgumentException("Hasła muszą być takie same");
         }
-        if (request.getPassword().length() < 5) {
-            throw new IllegalArgumentException("Hasło musi mieć co najmniej 5 znaków");
-        }
-        String password = request.getPassword();
-        if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$")) {
-            throw new IllegalArgumentException("Hasło musi zawierać co najmniej jedną dużą literę, jedną małą literę i jedną cyfrę");
-        }
+        validatePassword(request.getPassword());
+    }
+
+    private static String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

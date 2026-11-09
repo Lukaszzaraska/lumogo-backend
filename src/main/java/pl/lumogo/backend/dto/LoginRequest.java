@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class LoginRequest {
     @Schema(description = "E-mail użytkownika", example = "anna@example.com")
     private String email;
-    @Schema(description = "Hasło użytkownika", example = "Abc123")
+    @Schema(description = "Hasło użytkownika", example = "Haslo!23")
     private String password;
 
     public String getEmail() {

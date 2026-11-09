@@ -32,6 +32,7 @@ public class SecurityConfig {
                     "/api/auth/**",
                     "/api/interests/**",
                     "/api/conditions/**",
+                    "/api/widget/**",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
@@ -61,7 +62,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+        // Aplikacja nie używa ciasteczek; "*" razem z credentials=true Spring odrzuca.
+        config.setAllowCredentials(false);
 
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

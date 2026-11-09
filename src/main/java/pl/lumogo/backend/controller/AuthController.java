@@ -1,5 +1,7 @@
 package pl.lumogo.backend.controller;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import pl.lumogo.backend.dto.LoginRequest;
 import pl.lumogo.backend.dto.RegisterRequest;
 import pl.lumogo.backend.dto.UpdateProfileRequest;
 import pl.lumogo.backend.service.AuthService;
+import pl.lumogo.backend.service.EmailAlreadyUsedException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -30,12 +33,16 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Rejestracja nowego użytkownika", description = "Hasło musi mieć minimum 5 znaków: 1 wielką literę, 1 małą literę, 1 cyfrę")
+    @Operation(summary = "Rejestracja nowego użytkownika", description = "Nazwisko opcjonalne. Hasło: min. 8 znaków, 1 wielka litera, 1 znak specjalny")
     @ApiResponse(responseCode = "200", description = "Użytkownik zarejestrowany pomyślnie")
     @ApiResponse(responseCode = "400", description = "Błąd walidacji")
+    @ApiResponse(responseCode = "409", description = "Konto z tym adresem e-mail już istnieje")
     public ResponseEntity<AuthResponse> register(@RequestBody @Validated RegisterRequest request) {
         try {
             return ResponseEntity.ok(authService.register(request));
+        } catch (EmailAlreadyUsedException | DataIntegrityViolationException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new AuthResponse("error", new EmailAlreadyUsedException().getMessage()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(new AuthResponse("error", ex.getMessage()));
         }

@@ -8,7 +8,6 @@ Backend aplikacji mobilnej LumoGo dla biegaczy i osób aktywnych.
 - Spring Data JPA
 - Spring Security
 - Spring Validation
-- Lombok
 - H2 Database (runtime)
 
 ## Uruchomienie
@@ -49,11 +48,14 @@ Jeśli chcesz, aby backend był dostępny z zewnątrz, upewnij się, że port 80
 - `GET /api/test` - example test endpoint for frontend integration
 - `GET /api/conditions/today?lat={latitude}&lon={longitude}` - today’s weather + air quality summary
 - `POST /api/auth/register` - rejestracja nowego użytkownika
-  - payload: `{ "firstName": "Anna", "lastName": "Kowalska", "email": "anna@example.com", "password": "Abc12", "passwordConfirm": "Abc12" }`
-  - hasło musi mieć co najmniej 5 znaków, zawierać co najmniej jedną cyfrę, jedną dużą literę i jedną małą literę
+  - payload: `{ "firstName": "Anna", "lastName": "Kowalska", "email": "anna@example.com", "password": "Haslo!23", "passwordConfirm": "Haslo!23" }`
+  - `lastName` jest opcjonalne
+  - hasło: co najmniej 8 znaków, jedna wielka litera i jeden znak specjalny (ta sama reguła co w aplikacji)
+  - `409 Conflict`, jeśli konto z tym e-mailem już istnieje
 - `POST /api/auth/login` - logowanie użytkownika
+  - payload: `{ "email": "anna@example.com", "password": "Haslo!23" }`
 - `GET /api/interests/options` - lista dostępnych zainteresowań do wyboru
 - `GET /api/interests/user?email=anna@example.com` - pobierz zapisane zainteresowania użytkownika
 - `POST /api/interests` - zapisanie wybranych zainteresowań po rejestracji
   - payload: `{ "email": "anna@example.com", "interests": ["Bieganie", "Spacer", "Trekking"] }`
-  - payload: `{ "email": "anna@example.com", "password": "abc12" }`
+

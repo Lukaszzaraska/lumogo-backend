@@ -46,11 +46,6 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
@@ -95,6 +90,9 @@
                 <version>3.11.0</version>
                 <configuration>
                     <release>${java.version}</release>
+                    <!-- Wymagane przez Spring do odczytu nazw @RequestParam/@PathVariable
+                         (bez spring-boot-starter-parent ta flaga nie jest ustawiana automatycznie) -->
+                    <parameters>true</parameters>
                 </configuration>
             </plugin>
         </plugins>

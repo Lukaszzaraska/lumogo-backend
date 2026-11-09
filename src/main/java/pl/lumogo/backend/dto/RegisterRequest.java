@@ -6,13 +6,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class RegisterRequest {
     @Schema(description = "Imię użytkownika", example = "Anna")
     private String firstName;
-    @Schema(description = "Nazwisko użytkownika", example = "Kowalska")
+    @Schema(description = "Nazwisko użytkownika (opcjonalne)", example = "Kowalska", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String lastName;
     @Schema(description = "E-mail użytkownika", example = "anna@example.com")
     private String email;
-    @Schema(description = "Hasło (min 5 znaków: wielka litera, mała litera, cyfra)", example = "Abc123")
+    @Schema(description = "Hasło (min. 8 znaków, wielka litera, znak specjalny)", example = "Haslo!23")
     private String password;
-    @Schema(description = "Potwierdzenie hasła", example = "Abc123")
+    @Schema(description = "Potwierdzenie hasła", example = "Haslo!23")
     private String passwordConfirm;
 
     public String getFirstName() {

@@ -9,19 +9,17 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:
-    database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
-    show-sql: true
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
         format_sql: true
   h2:
     console:
-      enabled: true
+      # Tylko do lokalnego debugowania na H2: H2_CONSOLE_ENABLED=true
+      enabled: ${H2_CONSOLE_ENABLED:false}
       path: /h2-console
-  webflux:
-    static-path-pattern: /static/**
 
 springdoc:
   api-docs:

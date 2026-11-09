@@ -10,7 +10,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.Iterator;
 
 @Service
 public class WeatherConditionService {
@@ -34,17 +33,19 @@ public class WeatherConditionService {
         JsonNode weatherNode = fetchJson(buildWeatherUrl(lat, lon));
         JsonNode airNode = fetchJson(buildAirQualityUrl(lat, lon));
 
-        JsonNode currentWeather = weatherNode.path("current_weather");
-        if (currentWeather.isMissingNode() || currentWeather.isEmpty()) {
+        JsonNode current = weatherNode.path("current");
+        if (current.isMissingNode() || current.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Unable to retrieve current weather data");
         }
 
-        double temperature = currentWeather.path("temperature").asDouble(Double.NaN);
-        double windSpeed = currentWeather.path("windspeed").asDouble(Double.NaN);
-        String currentTime = currentWeather.path("time").asText();
-
-        double humidity = findHourlyValue(weatherNode.path("hourly").path("time"), weatherNode.path("hourly").path("relativehumidity_2m"), currentTime, 0.0);
-        int aqi = (int) Math.round(findHourlyValue(airNode.path("hourly").path("time"), airNode.path("hourly").path("us_aqi"), currentTime, 0.0));
+        double temperature = current.path("temperature_2m").asDouble(Double.NaN);
+        double windSpeed = current.path("wind_speed_10m").asDouble(Double.NaN);
+        double humidity = current.path("relative_humidity_2m").asDouble(0.0);
+        String currentTime = current.path("time").asText();
+        int aqi = (int) Math.round(airNode.path("current").path("us_aqi").asDouble(0.0));
+        if (Double.isNaN(temperature) || Double.isNaN(windSpeed)) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Incomplete current weather data");
+        }
 
         LocalDate date = parseDateOnly(currentTime);
 
@@ -80,29 +81,11 @@ public class WeatherConditionService {
     }
 
     private String buildWeatherUrl(double latitude, double longitude) {
-        return WEATHER_URL + "?latitude=" + latitude + "&longitude=" + longitude + "&current_weather=true&hourly=relativehumidity_2m&timezone=auto";
+        return WEATHER_URL + "?latitude=" + latitude + "&longitude=" + longitude + "&current=temperature_2m,relative_humidity_2m,wind_speed_10m&wind_speed_unit=kmh&timezone=auto";
     }
 
     private String buildAirQualityUrl(double latitude, double longitude) {
-        return AIR_QUALITY_URL + "?latitude=" + latitude + "&longitude=" + longitude + "&hourly=us_aqi&timezone=auto";
-    }
-
-    private double findHourlyValue(JsonNode timeNodes, JsonNode valueNodes, String targetTime, double defaultValue) {
-        if (!timeNodes.isArray() || !valueNodes.isArray() || timeNodes.size() != valueNodes.size()) {
-            return defaultValue;
-        }
-
-        Iterator<JsonNode> timeIterator = timeNodes.elements();
-        Iterator<JsonNode> valueIterator = valueNodes.elements();
-        while (timeIterator.hasNext() && valueIterator.hasNext()) {
-            String time = timeIterator.next().asText();
-            double value = valueIterator.next().asDouble(defaultValue);
-            if (time.equals(targetTime)) {
-                return value;
-            }
-        }
-
-        return valueNodes.get(0).asDouble(defaultValue);
+        return AIR_QUALITY_URL + "?latitude=" + latitude + "&longitude=" + longitude + "&current=us_aqi&timezone=auto";
     }
 
     private LocalDate parseDateOnly(String time) {
