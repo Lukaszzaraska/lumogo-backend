@@ -34,6 +34,15 @@ public class AppUser {
     @Column(columnDefinition = "TEXT")
     private String interests;
 
+    /** Dowolny tekst z formularza aplikacji ("Woman", "Man", ...); null = nie podano. */
+    private String gender;
+
+    /** Preferencje planera: domyślna długość aktywności (min) i ulubione aktywności (id z aplikacji, po przecinku). */
+    private Integer defaultDuration;
+
+    @Column(columnDefinition = "TEXT")
+    private String favoriteActivities;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -45,6 +54,30 @@ public class AppUser {
         this.lastName = lastName;
         this.email = email;
         this.password = password;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public Integer getDefaultDuration() {
+        return defaultDuration;
+    }
+
+    public void setDefaultDuration(Integer defaultDuration) {
+        this.defaultDuration = defaultDuration;
+    }
+
+    public String getFavoriteActivities() {
+        return favoriteActivities;
+    }
+
+    public void setFavoriteActivities(String favoriteActivities) {
+        this.favoriteActivities = favoriteActivities;
     }
 
     public Long getId() {

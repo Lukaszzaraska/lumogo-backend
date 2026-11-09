@@ -5,14 +5,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,12 +17,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.lumogo.backend.dto.AuthResponse;
+import pl.lumogo.backend.dto.ChangePasswordRequest;
 import pl.lumogo.backend.dto.LoginRequest;
 import pl.lumogo.backend.dto.RegisterRequest;
 import pl.lumogo.backend.dto.UpdateProfileRequest;
 import pl.lumogo.backend.service.AuthService;
-import pl.lumogo.backend.service.EmailAlreadyUsedException;
-import pl.lumogo.backend.service.UserNotFoundException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -80,25 +76,25 @@ public class AuthController {
             : ResponseEntity.ok(response);
     }
 
-    @ExceptionHandler({EmailAlreadyUsedException.class, DataIntegrityViolationException.class})
-    ResponseEntity<AuthResponse> emailTaken() {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-            .body(AuthResponse.error("EMAIL_TAKEN", new EmailAlreadyUsedException().getMessage()));
+    @PostMapping("/change-password")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Zmień hasło zalogowanego użytkownika")
+    @ApiResponse(responseCode = "204", description = "Hasło zmienione")
+    @ApiResponse(responseCode = "400", description = "Złe aktualne hasło lub zbyt słabe nowe (code: VALIDATION_ERROR)")
+    @ApiResponse(responseCode = "401", description = "Brak lub nieważny token")
+    public ResponseEntity<Void> changePassword(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                               @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(jwt.getSubject(), request.getCurrentPassword(), request.getNewPassword());
+        return ResponseEntity.noContent().build();
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    ResponseEntity<AuthResponse> invalidCredentials() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(AuthResponse.error("INVALID_CREDENTIALS", "Nieprawidłowy e-mail lub hasło"));
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    ResponseEntity<AuthResponse> userNotFound(UserNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(AuthResponse.error("USER_NOT_FOUND", ex.getMessage()));
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    ResponseEntity<AuthResponse> validation(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(AuthResponse.error("VALIDATION_ERROR", ex.getMessage()));
+    @DeleteMapping("/account")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Usuń konto zalogowanego użytkownika", description = "Usuwa konto, zapisane plany i preferencje. Wymagane przez Google Play.")
+    @ApiResponse(responseCode = "204", description = "Konto usunięte")
+    @ApiResponse(responseCode = "401", description = "Brak lub nieważny token")
+    public ResponseEntity<Void> deleteAccount(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        authService.deleteAccount(jwt.getSubject());
+        return ResponseEntity.noContent().build();
     }
 }

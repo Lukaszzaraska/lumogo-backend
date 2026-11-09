@@ -53,11 +53,18 @@ nie z parametru `email`.
 - `GET /api/conditions/today?lat={lat}&lon={lon}` – bieżąca pogoda, AQI i ocena 0–100
 - `GET /api/conditions/best-window?lat={lat}&lon={lon}&date=2026-11-10&durationMinutes=30` – najlepsze okno
   na aktywność w danym dniu (od dziś do 4 dni naprzód, start o pełnej godzinie 6:00–22:00, uwzględnia szansę opadów)
-- `POST /api/auth/register` – rejestracja, zwraca token
-  - `{ "firstName": "Anna", "lastName": "Kowalska", "email": "anna@example.com", "password": "Haslo!23", "passwordConfirm": "Haslo!23" }`
-  - `lastName` opcjonalne; hasło: min. 8 znaków, wielka litera, znak specjalny
+- `POST /api/auth/register` – rejestracja, zwraca token oraz `id` i `gender`
+  - `{ "email": "anna@example.com", "firstName": "Anna", "gender": "Woman", "password": "Haslo!23" }`
+  - `lastName`, `gender` i `passwordConfirm` opcjonalne (`gender: "-"` = nie podano);
+    hasło: min. 8 znaków, wielka litera, znak specjalny
 - `POST /api/auth/login` – `{ "email": "anna@example.com", "password": "Haslo!23" }`, zwraca token
-- 🔒 `GET /api/auth/profile`, 🔒 `PUT /api/auth/profile` – profil zalogowanego użytkownika
+- 🔒 `GET /api/auth/profile`, 🔒 `PUT /api/auth/profile` (`firstName`, `lastName`, `gender`) – profil
+- 🔒 `POST /api/auth/change-password` – `{ "currentPassword": "...", "newPassword": "..." }`, 204
+- 🔒 `DELETE /api/auth/account` – usuwa konto, plany i preferencje (wymóg Google Play), 204
+- 🔒 `GET /api/plans`, 🔒 `POST /api/plans`, 🔒 `DELETE /api/plans/{id}` – zapisane plany (tylko własne)
+- 🔒 `GET /api/preferences`, 🔒 `PUT /api/preferences` – `{ "defaultDuration": 30, "favoriteActivities": "walking,running" }`
+- `GET /api/content/faq`, `GET /api/content/privacy` – treści z `src/main/resources/content/*.json`
+  (polityka prywatności to **szkic do weryfikacji**: uzupełnij administratora danych)
 - `GET /api/interests/options` – lista zainteresowań
 - 🔒 `GET /api/interests/user`, 🔒 `POST /api/interests` (`{ "interests": ["Bieganie", "Spacer"] }`)
 - 🔒 `GET /api/widget/status`

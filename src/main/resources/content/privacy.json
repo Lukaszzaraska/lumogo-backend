@@ -1,0 +1,29 @@
+{
+  "lastUpdated": "DRAFT – 9 November 2026 (to be reviewed before publication)",
+  "sections": [
+    {
+      "title": "Who we are",
+      "content": "LumoGo is a weather planning app. Data controller: [name and contact details of the data controller – to be completed]. Contact: support@lumogo.app."
+    },
+    {
+      "title": "Data we store",
+      "content": "Your account: email address, first name, optional last name and gender, and your password in hashed form (we never store it in plain text). Your saved plans (activity, date and time) and planner preferences (default duration, favourite activities)."
+    },
+    {
+      "title": "Location",
+      "content": "If you allow it, the app uses your approximate location while it is open. Coordinates are rounded to about 1 km and sent to our server only to fetch weather and air quality from Open-Meteo. We do not store your location."
+    },
+    {
+      "title": "What we don't do",
+      "content": "We don't show ads, we don't sell your data and we don't use third-party analytics or tracking."
+    },
+    {
+      "title": "How long we keep data",
+      "content": "Until you delete your account. Deleting your account in Profile → Delete account permanently removes your account, saved plans and preferences."
+    },
+    {
+      "title": "Your rights",
+      "content": "Under the GDPR you can access, correct, export and delete your data, and lodge a complaint with the President of the Personal Data Protection Office (UODO). To exercise these rights, contact support@lumogo.app."
+    }
+  ]
+}

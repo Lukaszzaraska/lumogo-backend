@@ -1,0 +1,26 @@
+[
+  {
+    "question": "How is the conditions score calculated?",
+    "answer": "The score (0–100) combines four things: temperature compared with what is comfortable for the current season, humidity, wind speed and air quality (US AQI). When planning an activity, the chance of rain is also taken into account."
+  },
+  {
+    "question": "Where does the weather data come from?",
+    "answer": "Weather forecasts and air quality come from Open-Meteo. Values are refreshed each time you open the app."
+  },
+  {
+    "question": "Why does LumoGo ask for my location?",
+    "answer": "To show the weather where you are. The app only uses your approximate location while it is open and never tracks you in the background. If you don't allow it, LumoGo shows the weather for Warsaw."
+  },
+  {
+    "question": "How does the planner pick the best time?",
+    "answer": "It checks the hourly forecast for the day you choose and finds the window between 6:00 and 22:00 with the best score for the length of your activity. For today, hours that have already passed are skipped."
+  },
+  {
+    "question": "How do I change my password?",
+    "answer": "Go to Profile → Change password. You will need your current password."
+  },
+  {
+    "question": "How do I delete my account?",
+    "answer": "Go to Profile → Delete account. Your account, saved plans and preferences are deleted permanently."
+  }
+]

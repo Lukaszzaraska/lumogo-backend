@@ -15,6 +15,17 @@ public class UpdateProfileRequest {
     @Schema(description = "Aktualne hasło użytkownika", example = "Haslo!23")
     private String currentPassword;
 
+    @Schema(description = "Płeć (pusty tekst lub \"-\" usuwa wartość)", example = "Woman")
+    private String gender;
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
     public String getFirstName() {
         return firstName;
     }
