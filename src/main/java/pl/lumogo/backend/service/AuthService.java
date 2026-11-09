@@ -2,8 +2,6 @@ package pl.lumogo.backend.service;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +11,7 @@ import pl.lumogo.backend.dto.RegisterRequest;
 import pl.lumogo.backend.dto.UpdateProfileRequest;
 import pl.lumogo.backend.model.AppUser;
 import pl.lumogo.backend.repository.AppUserRepository;
+import pl.lumogo.backend.security.TokenService;
 
 import java.util.Locale;
 
@@ -22,13 +21,16 @@ public class AuthService {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final TokenService tokenService;
 
     public AuthService(AppUserRepository appUserRepository,
                        PasswordEncoder passwordEncoder,
-                       AuthenticationManager authenticationManager) {
+                       AuthenticationManager authenticationManager,
+                       TokenService tokenService) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.tokenService = tokenService;
     }
 
     @Transactional
@@ -55,12 +57,12 @@ public class AuthService {
             appUser.getEmail(),
             appUser.getFirstName(),
             appUser.getLastName()
-        );
+        ).withToken(tokenService.issue(appUser.getEmail()));
     }
 
     public AuthResponse login(LoginRequest request) {
         if (request.getEmail() == null || request.getEmail().isBlank() || request.getPassword() == null) {
-            return new AuthResponse("error", "E-mail i hasło są wymagane");
+            throw new IllegalArgumentException("E-mail i hasło są wymagane");
         }
 
         String email = normalizeEmail(request.getEmail());
@@ -69,11 +71,11 @@ public class AuthService {
             request.getPassword()
         );
 
-        Authentication authentication = authenticationManager.authenticate(authToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // Rzuca AuthenticationException przy złym e-mailu lub haśle.
+        authenticationManager.authenticate(authToken);
 
         AppUser appUser = appUserRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Użytkownik nie znaleziony"));
+            .orElseThrow(UserNotFoundException::new);
 
         return new AuthResponse(
             "success",
@@ -82,16 +84,13 @@ public class AuthService {
             appUser.getFirstName(),
             appUser.getLastName(),
             appUser.getInterests()
-        );
+        ).withToken(tokenService.issue(appUser.getEmail()));
     }
 
     public AuthResponse getProfile(String email) {
-        if (email == null || email.isBlank()) {
-            return new AuthResponse("error", "E-mail jest wymagany");
-        }
 
         AppUser appUser = appUserRepository.findByEmail(normalizeEmail(email))
-            .orElseThrow(() -> new IllegalArgumentException("Użytkownik nie znaleziony"));
+            .orElseThrow(UserNotFoundException::new);
 
         return new AuthResponse(
             "success",
@@ -104,14 +103,9 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse updateProfile(UpdateProfileRequest request) {
-        if (request.getEmail() == null || request.getEmail().isBlank()) {
-            return new AuthResponse("error", "E-mail jest wymagany");
-        }
-
-        String email = normalizeEmail(request.getEmail());
-        AppUser appUser = appUserRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Użytkownik nie znaleziony"));
+    public AuthResponse updateProfile(String email, UpdateProfileRequest request) {
+        AppUser appUser = appUserRepository.findByEmail(normalizeEmail(email))
+            .orElseThrow(UserNotFoundException::new);
 
         boolean updated = false;
 
@@ -141,7 +135,7 @@ public class AuthService {
         }
 
         if (!updated) {
-            return new AuthResponse("error", "Brak zmian do zapisania");
+            return AuthResponse.error("NO_CHANGES", "Brak zmian do zapisania");
         }
 
         appUserRepository.save(appUser);

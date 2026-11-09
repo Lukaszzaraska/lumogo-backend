@@ -44,18 +44,32 @@ Jeśli chcesz, aby backend był dostępny z zewnątrz, upewnij się, że port 80
 - API docs: `http://localhost:8080/v3/api-docs`
 
 ## Endpoints
-- `GET /api/health` - health check
-- `GET /api/test` - example test endpoint for frontend integration
-- `GET /api/conditions/today?lat={latitude}&lon={longitude}` - today’s weather + air quality summary
-- `POST /api/auth/register` - rejestracja nowego użytkownika
-  - payload: `{ "firstName": "Anna", "lastName": "Kowalska", "email": "anna@example.com", "password": "Haslo!23", "passwordConfirm": "Haslo!23" }`
-  - `lastName` jest opcjonalne
-  - hasło: co najmniej 8 znaków, jedna wielka litera i jeden znak specjalny (ta sama reguła co w aplikacji)
-  - `409 Conflict`, jeśli konto z tym e-mailem już istnieje
-- `POST /api/auth/login` - logowanie użytkownika
-  - payload: `{ "email": "anna@example.com", "password": "Haslo!23" }`
-- `GET /api/interests/options` - lista dostępnych zainteresowań do wyboru
-- `GET /api/interests/user?email=anna@example.com` - pobierz zapisane zainteresowania użytkownika
-- `POST /api/interests` - zapisanie wybranych zainteresowań po rejestracji
-  - payload: `{ "email": "anna@example.com", "interests": ["Bieganie", "Spacer", "Trekking"] }`
 
+Endpointy oznaczone 🔒 wymagają nagłówka `Authorization: Bearer <token>`.
+Token zwracają `register` i `login` (ważny 30 dni, `JWT_TTL_DAYS`). Użytkownik jest brany z tokena,
+nie z parametru `email`.
+
+- `GET /api/health` – health check
+- `GET /api/conditions/today?lat={lat}&lon={lon}` – bieżąca pogoda, AQI i ocena 0–100
+- `GET /api/conditions/best-window?lat={lat}&lon={lon}&date=2026-11-10&durationMinutes=30` – najlepsze okno
+  na aktywność w danym dniu (od dziś do 4 dni naprzód, start o pełnej godzinie 6:00–22:00, uwzględnia szansę opadów)
+- `POST /api/auth/register` – rejestracja, zwraca token
+  - `{ "firstName": "Anna", "lastName": "Kowalska", "email": "anna@example.com", "password": "Haslo!23", "passwordConfirm": "Haslo!23" }`
+  - `lastName` opcjonalne; hasło: min. 8 znaków, wielka litera, znak specjalny
+- `POST /api/auth/login` – `{ "email": "anna@example.com", "password": "Haslo!23" }`, zwraca token
+- 🔒 `GET /api/auth/profile`, 🔒 `PUT /api/auth/profile` – profil zalogowanego użytkownika
+- `GET /api/interests/options` – lista zainteresowań
+- 🔒 `GET /api/interests/user`, 🔒 `POST /api/interests` (`{ "interests": ["Bieganie", "Spacer"] }`)
+- 🔒 `GET /api/widget/status`
+
+Błędy mają pole `code` do tłumaczenia w aplikacji: `EMAIL_TAKEN` (409), `INVALID_CREDENTIALS` (401),
+`VALIDATION_ERROR` (400), `USER_NOT_FOUND` (404), `NO_CHANGES` (400). Pole `message` jest po polsku.
+
+## Zmienne środowiskowe
+
+| Zmienna | Domyślnie | Uwagi |
+|---|---|---|
+| `JWT_SECRET` | sekret deweloperski | **na serwerze obowiązkowo własny**, min. 32 znaki (`openssl rand -base64 48`) |
+| `JWT_TTL_DAYS` | 30 | ważność tokena |
+| `SPRING_DATASOURCE_*` | H2 w pamięci | Postgres: patrz docker-compose |
+| `H2_CONSOLE_ENABLED` | false | tylko lokalnie |

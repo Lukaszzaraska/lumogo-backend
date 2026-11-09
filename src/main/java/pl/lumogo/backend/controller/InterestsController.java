@@ -5,7 +5,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,45 +41,33 @@ public class InterestsController {
     }
 
     @GetMapping("/user")
-    @Operation(summary = "Pobierz zainteresowania użytkownika", description = "Zwraca zapisane zainteresowania dla danego użytkownika")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Zainteresowania zalogowanego użytkownika", description = "Użytkownik z tokena")
     @ApiResponse(responseCode = "200", description = "Zainteresowania pobrane")
-    @ApiResponse(responseCode = "400", description = "E-mail jest wymagany")
-    public ResponseEntity<?> getUserInterests(@RequestParam @Parameter(description = "E-mail użytkownika") String email) {
-        if (email == null || email.isBlank()) {
-            return ResponseEntity.badRequest().body(new AuthResponse("error", "E-mail jest wymagany"));
-        }
-
-        return interestsService.getUserInterests(email)
-            .map(interests -> {
-                Map<String, Object> response = new HashMap<>();
-                response.put("status", "success");
-                response.put("email", email);
-                response.put("interests", interests);
-                return ResponseEntity.ok(response);
-            })
-            .orElseGet(() -> {
-                Map<String, Object> response = new HashMap<>();
-                response.put("status", "success");
-                response.put("email", email);
-                response.put("interests", List.of());
-                return ResponseEntity.ok(response);
-            });
+    @ApiResponse(responseCode = "401", description = "Brak lub nieważny token")
+    public ResponseEntity<Map<String, Object>> getUserInterests(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        String email = jwt.getSubject();
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("email", email);
+        response.put("interests", interestsService.getUserInterests(email).orElse(List.of()));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    @Operation(summary = "Zapisz zainteresowania użytkownika", description = "Po rejestracji użytkownik wybiera interesujące go kategorie sportowe")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Zapisz zainteresowania zalogowanego użytkownika", description = "Lista nazw z /api/interests/options")
     @ApiResponse(responseCode = "200", description = "Zainteresowania zapisane pomyślnie")
     @ApiResponse(responseCode = "400", description = "Błąd w żądaniu")
-    public ResponseEntity<AuthResponse> saveInterests(@RequestBody InterestsRequest request) {
-        if (request.getEmail() == null || request.getEmail().isBlank()) {
-            return ResponseEntity.badRequest().body(new AuthResponse("error", "E-mail jest wymagany"));
-        }
+    @ApiResponse(responseCode = "401", description = "Brak lub nieważny token")
+    public ResponseEntity<AuthResponse> saveInterests(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                                      @RequestBody InterestsRequest request) {
         if (request.getInterests() == null || request.getInterests().isEmpty()) {
-            return ResponseEntity.badRequest().body(new AuthResponse("error", "Wybierz przynajmniej jedno zainteresowanie"));
+            return ResponseEntity.badRequest().body(AuthResponse.error("VALIDATION_ERROR", "Wybierz przynajmniej jedno zainteresowanie"));
         }
 
-        return interestsService.saveUserInterests(request.getEmail(), request.getInterests())
+        return interestsService.saveUserInterests(jwt.getSubject(), request.getInterests())
             .map(user -> ResponseEntity.ok(new AuthResponse("success", "Zainteresowania zapisane", user.getEmail(), user.getFirstName(), user.getLastName())))
-            .orElseGet(() -> ResponseEntity.badRequest().body(new AuthResponse("error", "Użytkownik nie znaleziony")));
+            .orElseGet(() -> ResponseEntity.status(404).body(AuthResponse.error("USER_NOT_FOUND", "Użytkownik nie znaleziony")));
     }
 }

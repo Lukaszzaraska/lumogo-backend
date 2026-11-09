@@ -3,7 +3,10 @@ package pl.lumogo.backend.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,10 +26,11 @@ public class WidgetController {
     }
 
     @GetMapping("/status")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Pobierz stan widgeta", description = "Zwraca przypomnienia, motywację oraz stan widgeta do wyświetlenia w aplikacji.")
     @ApiResponse(responseCode = "200", description = "Stan widgeta pobrany pomyślnie")
-    public ResponseEntity<WidgetStatusResponse> getStatus(@RequestParam(required = false) String email) {
-        WidgetStatusResponse response = widgetService.getWidgetStatus(email);
+    public ResponseEntity<WidgetStatusResponse> getStatus(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        WidgetStatusResponse response = widgetService.getWidgetStatus(jwt.getSubject());
         return ResponseEntity.ok(response);
     }
 }

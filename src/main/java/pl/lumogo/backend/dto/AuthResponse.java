@@ -16,6 +16,30 @@ public class AuthResponse {
     private String lastName;
     @Schema(description = "Zainteresowania użytkownika jako tekst", example = "Sport, Muzyka, Podróże")
     private String interests;
+    @Schema(description = "Token JWT (Bearer) zwracany przy logowaniu i rejestracji")
+    private String token;
+    @Schema(description = "Kod błędu do tłumaczenia w aplikacji", example = "EMAIL_TAKEN",
+        allowableValues = {"EMAIL_TAKEN", "INVALID_CREDENTIALS", "VALIDATION_ERROR", "USER_NOT_FOUND", "NO_CHANGES"})
+    private String code;
+
+    public static AuthResponse error(String code, String message) {
+        AuthResponse response = new AuthResponse("error", message);
+        response.code = code;
+        return response;
+    }
+
+    public AuthResponse withToken(String token) {
+        this.token = token;
+        return this;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public String getCode() {
+        return code;
+    }
 
     public AuthResponse() {
     }

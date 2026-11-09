@@ -33,6 +33,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Lokalnie wystarczy domyślny; na serwerze ustaw własny sekret
+      JWT_SECRET: ${JWT_SECRET:-lumogo-dev-secret-change-me-before-deploy-0123456789}
     depends_on:
       - db
 

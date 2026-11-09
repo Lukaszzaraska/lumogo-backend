@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,23 +24,25 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/api/conditions/today").permitAll()
                 .requestMatchers(
                     "/error",
                     "/api/health",
                     "/api/test",
-                    "/api/auth/**",
-                    "/api/interests/**",
+                    "/api/auth/register",
+                    "/api/auth/login",
+                    "/api/interests/options",
                     "/api/conditions/**",
-                    "/api/widget/**",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/h2-console/**"
                 ).permitAll()
+                // /api/auth/profile, /api/interests (zapis i odczyt), /api/widget/** wymagają tokena
                 .anyRequest().authenticated()
             )
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(form -> form.disable());
 

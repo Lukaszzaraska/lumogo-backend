@@ -34,3 +34,9 @@ logging:
   level:
     root: INFO
     org.springframework: INFO
+
+app:
+  jwt:
+    # Na serwerze ustaw JWT_SECRET (min. 32 znaki), np. wynik: openssl rand -base64 48
+    secret: ${JWT_SECRET:lumogo-dev-secret-change-me-before-deploy-0123456789}
+    ttl-days: ${JWT_TTL_DAYS:30}
