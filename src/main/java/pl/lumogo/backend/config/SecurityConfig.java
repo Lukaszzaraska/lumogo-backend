@@ -27,6 +27,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/conditions/today").permitAll()
                 .requestMatchers(
+                    "/error",
                     "/api/health",
                     "/api/test",
                     "/api/auth/**",
